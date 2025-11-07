@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "invoice-processing"
+version = "0.1.0"
+description = ""
+authors = ["chrisongg"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+azure-ai-documentintelligence = "^1.0.2"
+python-dotenv = "^1.2.1"
+langchain = "^1.0.4"
+langchain-community = "^0.4.1"
+python-slugify = "^8.0.4"
+langchain-openai = "^1.0.2"
+langchain-anthropic = "^1.0.1"
+langchain-google-genai = "^3.0.1"
+streamlit = "^1.51.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
