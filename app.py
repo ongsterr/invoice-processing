@@ -3,11 +3,69 @@ import csv
 import tempfile
 from io import StringIO
 from pathlib import Path
+import os
 
 import streamlit as st
+from dotenv import load_dotenv
 
 from src.chains import process_invoice_chain
 from src.ocr import parse_pdf_azure
+
+
+load_dotenv()
+
+APP_USERNAME = os.getenv("APP_USERNAME")
+APP_PASSWORD = os.getenv("APP_PASSWORD")
+
+DEFAULT_CREDENTIALS: dict[str, str] = {APP_USERNAME: APP_PASSWORD}
+
+
+def load_credentials() -> dict[str, str]:
+    """Return a username/password mapping, merging defaults with Streamlit secrets if present."""
+    credentials = DEFAULT_CREDENTIALS.copy()
+    try:
+        secrets_credentials = dict(st.secrets["credentials"])
+    except Exception:  # pragma: no cover - depends on deployment configuration
+        secrets_credentials = {}
+    credentials.update(secrets_credentials)
+    return credentials
+
+
+def require_login() -> None:
+    """Render a simple login form and stop execution until the user is authenticated."""
+    st.session_state.setdefault("authenticated", False)
+    st.session_state.setdefault("auth_error", "")
+
+    if st.session_state.authenticated:
+        username = st.session_state.get("username", "")
+        with st.sidebar:
+            st.success(f"Logged in as {username}")
+            if st.button("Log out"):
+                st.session_state.authenticated = False
+                st.session_state.username = ""
+                st.rerun()
+        return
+
+    st.markdown("#### **Login Required**")
+    with st.form("login_form", clear_on_submit=True):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submitted = st.form_submit_button("Log in")
+
+    if submitted:
+        credentials = load_credentials()
+        if credentials.get(username) == password:
+            st.session_state.authenticated = True
+            st.session_state.username = username
+            st.session_state.auth_error = ""
+            st.rerun()
+        else:
+            st.session_state.auth_error = "Invalid username or password."
+
+    if st.session_state.auth_error:
+        st.error(st.session_state.auth_error)
+
+    st.stop()
 
 
 def flatten_invoice_output(invoice_content: dict) -> list[dict]:
@@ -56,6 +114,9 @@ def render_pdf_viewer(pdf_bytes: bytes, *, height: int = 600) -> None:
 
 st.set_page_config(page_title="Invoice Processing", layout="centered")
 st.title("Invoice Processing Demo")
+
+require_login()
+
 st.markdown(
     """
     1. Upload an invoice PDF
