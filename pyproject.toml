@@ -15,7 +15,7 @@ python-slugify = "^8.0.4"
 langchain-openai = "^1.0.2"
 langchain-anthropic = "^1.0.1"
 langchain-google-genai = "^3.0.1"
-streamlit = "^1.51.0"
+streamlit = {version = "^1.51.0", extras = ["pdf"]}
 
 
 [build-system]

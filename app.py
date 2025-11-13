@@ -1,7 +1,6 @@
-import base64
 import csv
 import tempfile
-from io import StringIO
+from io import BytesIO, StringIO
 from pathlib import Path
 import os
 
@@ -100,16 +99,9 @@ def flatten_invoice_output(invoice_content: dict) -> list[dict]:
 def render_pdf_viewer(pdf_bytes: bytes, *, height: int = 600) -> None:
     """Display uploaded PDF in the Streamlit app."""
 
-    base64_pdf = base64.b64encode(pdf_bytes).decode("utf-8")
-    pdf_display = f"""
-        <iframe
-            src="data:application/pdf;base64,{base64_pdf}"
-            width="100%"
-            height="{height}"
-            style="border:none;"
-        ></iframe>
-    """
-    st.markdown(pdf_display, unsafe_allow_html=True)
+    pdf_buffer = BytesIO(pdf_bytes)
+    pdf_buffer.seek(0)
+    st.pdf(pdf_buffer, height=height)
 
 
 st.set_page_config(page_title="Invoice Processing", layout="centered")
@@ -144,7 +136,7 @@ if uploaded_file:
                 temp_file.write(pdf_bytes)
                 temp_path = Path(temp_file.name)
 
-            with st.spinner("Parsing PDF with Azure Document Intelligence..."):
+            with st.spinner("Parsing PDF to convert PDF to markdown text..."):
                 pdf_output = parse_pdf_azure(pdf_path=str(temp_path))
 
             if not pdf_output:
