@@ -136,46 +136,104 @@ if uploaded_file:
                 temp_file.write(pdf_bytes)
                 temp_path = Path(temp_file.name)
 
-            with st.spinner("Parsing PDF to convert PDF to markdown text..."):
+            with st.spinner("Convert PDF to markdown text..."):
                 pdf_output = parse_pdf_azure(pdf_path=str(temp_path))
+                pdf_pages = len(pdf_output["doc_pages"])
 
             if not pdf_output:
                 st.error("Unable to parse the uploaded PDF. Please try another file.")
             else:
                 markdown_content = pdf_output["doc_content"]
 
-                st.markdown("#### **Parsed Markdown**")
-                st.markdown(markdown_content, unsafe_allow_html=True)
+                with st.expander("Text View"):
+                    st.markdown(markdown_content, unsafe_allow_html=True)
 
                 with st.spinner("Extracting structured invoice data..."):
                     invoice_result = process_invoice_chain(invoice_details=markdown_content)
 
-                st.markdown("#### **Extracted Data**")
-                st.json(invoice_result["content"])
+                invoice_data = invoice_result.get("content") or {}
+
+                with st.expander("Structured View"):
+                    st.json(invoice_data)
+
+                with st.expander("Form View"):
+                    form_col1, form_col2 = st.columns(2)
+                    with form_col1:
+                        st.text_input(
+                            "Invoice ID",
+                            value=str(invoice_data.get("invoice_id", "")),
+                            disabled=False,
+                        )
+                        st.text_input(
+                            "Invoice Total",
+                            value=str(invoice_data.get("invoice_total", "")),
+                            disabled=False,
+                        )
+                        st.text_input(
+                            "Seller Name",
+                            value=str(invoice_data.get("seller_name", "")),
+                            disabled=False,
+                        )
+                    with form_col2:
+                        st.text_input(
+                            "Invoice Date",
+                            value=str(invoice_data.get("invoice_date", "")),
+                            disabled=False,
+                        )
+                        st.text_input(
+                            "Invoice Currency",
+                            value=str(invoice_data.get("invoice_total_currency", "")),
+                            disabled=False,
+                        )
+
+                    items = invoice_data.get("items") or []
+                    if items:
+                        item_rows = []
+                        for item in items:
+                            if not isinstance(item, dict):
+                                continue
+                            item_rows.append(
+                                {
+                                    "Cost Center": item.get("cost_center", ""),
+                                    "Description": item.get("description", ""),
+                                    "Quantity": item.get("quantity", ""),
+                                    "Unit Price": item.get("unit_price", ""),
+                                    "Total Price": item.get("total_price", ""),
+                                }
+                            )
+                        if item_rows:
+                            st.markdown("**Line Items**")
+                            st.table(item_rows)
+                        else:
+                            st.info("No line item details available.")
+                    else:
+                        st.info("No line item details available.")
 
                 flattened_rows = flatten_invoice_output(invoice_result["content"])
                 if flattened_rows:
-                    st.markdown("#### **Tabular View**")
-                    st.dataframe(flattened_rows)
+                    with st.expander("Tabular View"):
+                        st.dataframe(flattened_rows)
 
-                    csv_buffer = StringIO()
-                    fieldnames = sorted({key for row in flattened_rows for key in row.keys()})
-                    writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
-                    writer.writeheader()
-                    writer.writerows(flattened_rows)
+                        csv_buffer = StringIO()
+                        fieldnames = sorted({key for row in flattened_rows for key in row.keys()})
+                        writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
+                        writer.writeheader()
+                        writer.writerows(flattened_rows)
 
-                    st.download_button(
-                        label="Download Extracted Data (CSV)",
-                        data=csv_buffer.getvalue(),
-                        file_name="invoice_data.csv",
-                        mime="text/csv",
-                    )
+                        st.download_button(
+                            label="Download Extracted Data (CSV)",
+                            data=csv_buffer.getvalue(),
+                            file_name="invoice_data.csv",
+                            mime="text/csv",
+                        )
                 else:
                     st.info("No structured data available to export.")
 
                 usage_metadata = invoice_result.get("usage_metadata")
                 if usage_metadata:
-                    with st.expander("Model Usage Details"):
+                    with st.expander("Cost Summary"):
+                        usage_metadata["ocr_cost_usd"] = round(pdf_pages * 190 / 20000, 6)
+                        usage_metadata["total_cost_usd"] = usage_metadata["ocr_cost_usd"] + usage_metadata["llm_cost_usd"]
                         st.json(usage_metadata)
 
         except Exception as exc:  # pragma: no cover - Streamlit handles runtime errors

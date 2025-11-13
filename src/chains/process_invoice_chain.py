@@ -31,5 +31,9 @@ def process_invoice_chain(invoice_details, model="azure-gpt-4.1"):
     parsed_content_dict = parsed_content.model_dump()
 
     result.usage_metadata["model"] = model
+
+    input_tokens = result.usage_metadata["input_tokens"]
+    output_tokens = result.usage_metadata["output_tokens"]
+    result.usage_metadata["llm_cost_usd"] = round(input_tokens * 2.0 / 1000000 + output_tokens * 8.0 / 1000000, 6)
     result_output = {"content": parsed_content_dict, "usage_metadata": result.usage_metadata}
     return result_output
