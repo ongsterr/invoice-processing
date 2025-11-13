@@ -23,10 +23,10 @@ class InvoiceItem(BaseModel):
     description: Optional[str] = None
     quantity: Optional[float] = None
     unit_price: Optional[float] = None
+    subtotal_price: Optional[float] = None
     total_price: Optional[float] = None
     vat_rate: Optional[float] = None
     vat_amount: Optional[float] = None
-    net_price: Optional[float] = None
     currency: Optional[str] = None
 
 

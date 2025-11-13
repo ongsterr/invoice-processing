@@ -28,7 +28,7 @@ def process_invoice_prompt():
     {{
         "invoice_id": <string>,
         "invoice_date": <string>,
-        "invoice_total": <float>,
+        "invoice_total": <float>, # this is the total price after VAT
         "invoice_total_currency": <string>,
         "invoice_vat_amount": <float>,
         "invoice_vat_rate": <float>, # in decimal format i.e. 0.10 for 10%
@@ -66,10 +66,10 @@ def process_invoice_prompt():
                 "description": <string>, # translate to english where possible
                 "quantity": <float>,
                 "unit_price": <float>,
-                "total_price": <float>,
+                "subtotal_price": <float>, # this is the price before VAT
+                "total_price": <float>, # this is the price after VAT
                 "vat_rate": <float>,
                 "vat_amount": <float>,
-                "net_price": <float>,
                 "currency": <string>,
             }}
         ]
@@ -118,10 +118,10 @@ def process_invoice_prompt():
                 "description": "Item Description",
                 "quantity": 1.00,
                 "unit_price": 100.00,
-                "total_price": 100.00,
+                "subtotal_price": 100.00,
                 "vat_rate": 0.10,
                 "vat_amount": 10.00,
-                "net_price": 90.00,
+                "total_price": 110.00,
                 "currency": "USD",
             }}
         ]

@@ -196,9 +196,11 @@ if uploaded_file:
                                 {
                                     "Cost Center": item.get("cost_center", ""),
                                     "Description": item.get("description", ""),
-                                    "Quantity": item.get("quantity", ""),
-                                    "Unit Price": item.get("unit_price", ""),
-                                    "Total Price": item.get("total_price", ""),
+                                    "Qty": f"{item.get('quantity', 0):,.0f}",
+                                    "Unit $": f"{item.get('unit_price', 0):,.2f}",
+                                    "Subtotal $": f"{item.get('subtotal_price', 0):,.2f}",
+                                    "VAT $": f"{item.get('vat_amount', 0):,.2f}",
+                                    "Total $": f"{item.get('total_price', 0):,.2f}",
                                 }
                             )
                         if item_rows:
