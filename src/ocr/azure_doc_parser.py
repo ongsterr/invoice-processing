@@ -6,6 +6,7 @@ from langchain_community.document_loaders import AzureAIDocumentIntelligenceLoad
 from dotenv import load_dotenv
 import os
 from pathlib import Path
+from urllib.parse import urlparse
 from slugify import slugify
 
 from src.utils import download_pdf
@@ -110,21 +111,23 @@ def parse_pdf_azure(pdf_url: str = None, pdf_path: str = None):
 
         doc_pages_raw = documents[0].page_content.split("<!-- PageBreak -->")
 
-        if pdf_url and pdf_path:
-            doc_slug = slugify(pdf_url.split("/")[-1].split(".")[0])
-            with open(f"./data/temp/{doc_slug}.md", "w", encoding="utf-8") as f:
-                f.write(documents[0].page_content)
-        elif pdf_path:
-            doc_slug = slugify(str(pdf_path).split("/")[-1].split(".")[0])
-            with open(f"./data/temp/{doc_slug}.md", "w", encoding="utf-8") as f:
-                f.write(documents[0].page_content)
+        temp_dir = Path("data") / "temp"
+        temp_dir.mkdir(parents=True, exist_ok=True)
+
+        doc_slug_source: str | None = None
+        if pdf_path:
+            doc_slug_source = Path(pdf_path).stem
         elif pdf_url:
-            doc_slug = slugify(pdf_url.split("/")[-1].split(".")[0])
-            with open(f"./data/temp/{doc_slug}.md", "w", encoding="utf-8") as f:
-                f.write(documents[0].page_content)
-        else:
+            parsed_url = urlparse(pdf_url)
+            doc_slug_source = Path(parsed_url.path).stem or parsed_url.netloc
+
+        if not doc_slug_source:
             print("No PDF path or URL provided")
             return None
+
+        doc_slug = slugify(doc_slug_source) or "document"
+        output_path = temp_dir / f"{doc_slug}.md"
+        output_path.write_text(documents[0].page_content, encoding="utf-8")
 
         doc_pages = []
         for i, page in enumerate(doc_pages_raw, start=1):
