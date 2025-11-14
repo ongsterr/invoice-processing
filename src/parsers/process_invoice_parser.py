@@ -30,9 +30,16 @@ class InvoiceItem(BaseModel):
     currency: Optional[str] = None
 
 
+class Metadata(BaseModel):
+    language: Optional[List[str]] = None
+    confidence_score: Optional[float] = None
+
+
 class ProcessInvoiceResult(BaseModel):
     invoice_id: Optional[str] = None
+    purchase_order_number: Optional[str] = None
     invoice_date: Optional[str] = None
+    invoice_due_date: Optional[str] = None
     invoice_total: Optional[float] = None
     invoice_total_currency: Optional[str] = None
     invoice_vat_amount: Optional[float] = None
@@ -46,6 +53,7 @@ class ProcessInvoiceResult(BaseModel):
     seller_details: PartyDetails = Field(default_factory=PartyDetails)
     seller_contact_name: Optional[str] = None
     items: List[InvoiceItem] = Field(default_factory=list)
+    metadata: Metadata = Field(default_factory=Metadata)
 
 
 def parse_process_invoice_result(payload: Union[str, Dict[str, Any]]) -> ProcessInvoiceResult:

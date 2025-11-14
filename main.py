@@ -15,6 +15,6 @@ def process_invoice(invoice_filepath):
 
 
 if __name__ == "__main__":
-    invoice_filepath = "./data/vietnam_test_invoice2.pdf"
+    invoice_filepath = "./data/morocco_invoice.pdf"
 
     invoice_output = process_invoice(invoice_filepath)

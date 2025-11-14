@@ -1,6 +1,7 @@
 import csv
+import pandas as pd
 import tempfile
-from io import BytesIO, StringIO
+from io import BytesIO
 from pathlib import Path
 import os
 
@@ -153,10 +154,15 @@ if uploaded_file:
 
                 invoice_data = invoice_result.get("content") or {}
 
-                with st.expander("Structured View"):
-                    st.json(invoice_data)
+                with st.expander("Form View", expanded=True):
+                    confidence_level = invoice_data.get("metadata", {}).get("confidence_score", "")
+                    if confidence_level < 0.6:
+                        st.error(f"Invoice Processed with Low Confidence ({confidence_level})", icon="🔴")
+                    elif confidence_level < 0.9:
+                        st.info(f"Invoice Processed with Medium Confidence ({confidence_level})", icon="🟡")
+                    else:
+                        st.success(f"Invoice Processed with High Confidence ({confidence_level})", icon="🟢")
 
-                with st.expander("Form View"):
                     form_col1, form_col2 = st.columns(2)
                     with form_col1:
                         st.text_input(
@@ -175,6 +181,11 @@ if uploaded_file:
                             disabled=False,
                         )
                     with form_col2:
+                        st.text_input(
+                            "Invoice Language",
+                            value=str(invoice_data.get("metadata", {}).get("language", "")),
+                            disabled=False,
+                        )
                         st.text_input(
                             "Invoice Date",
                             value=str(invoice_data.get("invoice_date", "")),
@@ -196,40 +207,24 @@ if uploaded_file:
                                 {
                                     "Cost Center": item.get("cost_center", ""),
                                     "Description": item.get("description", ""),
-                                    "Qty": f"{item.get('quantity', 0):,.0f}",
-                                    "Unit $": f"{item.get('unit_price', 0):,.2f}",
-                                    "Subtotal $": f"{item.get('subtotal_price', 0):,.2f}",
-                                    "VAT $": f"{item.get('vat_amount', 0):,.2f}",
-                                    "Total $": f"{item.get('total_price', 0):,.2f}",
+                                    "Qty": f"{item.get('quantity', 0):,.0f}" if item.get("quantity", 0) else None,
+                                    "Unit $": f"{item.get('unit_price', 0):,.2f}" if item.get("unit_price", 0) else None,
+                                    "Subtotal $": f"{item.get('subtotal_price', 0):,.2f}" if item.get("subtotal_price", 0) else None,
+                                    "VAT $": f"{item.get('vat_amount', 0):,.2f}" if item.get("vat_amount", 0) else None,
+                                    "Total $": f"{item.get('total_price', 0):,.2f}" if item.get("total_price", 0) else None,
                                 }
                             )
                         if item_rows:
                             st.markdown("**Line Items**")
-                            st.table(item_rows)
+                            df_item_rows = pd.DataFrame(item_rows)
+                            st.dataframe(df_item_rows, hide_index=True)
                         else:
                             st.info("No line item details available.")
                     else:
                         st.info("No line item details available.")
 
-                flattened_rows = flatten_invoice_output(invoice_result["content"])
-                if flattened_rows:
-                    with st.expander("Tabular View"):
-                        st.dataframe(flattened_rows)
-
-                        csv_buffer = StringIO()
-                        fieldnames = sorted({key for row in flattened_rows for key in row.keys()})
-                        writer = csv.DictWriter(csv_buffer, fieldnames=fieldnames)
-                        writer.writeheader()
-                        writer.writerows(flattened_rows)
-
-                        st.download_button(
-                            label="Download Extracted Data (CSV)",
-                            data=csv_buffer.getvalue(),
-                            file_name="invoice_data.csv",
-                            mime="text/csv",
-                        )
-                else:
-                    st.info("No structured data available to export.")
+                with st.expander("Structured View"):
+                    st.json(invoice_data)
 
                 usage_metadata = invoice_result.get("usage_metadata")
                 if usage_metadata:

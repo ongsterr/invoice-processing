@@ -26,11 +26,13 @@ def process_invoice_prompt():
     <output_format>
     Provide JSON in this exact structure:
     {{
-        "invoice_id": <string>,
-        "invoice_date": <string>,
+        "invoice_id": <string>, # this is the invoice number
+        "purchase_order_number": <string>, # this is the purchase order number
+        "invoice_date": <string>, # this is the invoice date
+        "invoice_due_date": <string>, # this is the invoice due date
         "invoice_total": <float>, # this is the total price after VAT
-        "invoice_total_currency": <string>,
-        "invoice_vat_amount": <float>,
+        "invoice_total_currency": <string>, # this is the currency of the invoice
+        "invoice_vat_amount": <float>, # this is the amount of VAT
         "invoice_vat_rate": <float>, # in decimal format i.e. 0.10 for 10%
         "buyer_name": <string>,
         "buyer_address": {{
@@ -46,7 +48,7 @@ def process_invoice_prompt():
             "phone": <string>,
         }},
         "buyer_contact_name": <string>,
-        "seller_name": <string>,
+        "seller_name": <string>, # this is the company name of the seller / supplier
         "seller_address": {{
             "street": <string>,
             "city": <string>,
@@ -72,14 +74,20 @@ def process_invoice_prompt():
                 "vat_amount": <float>,
                 "currency": <string>,
             }}
-        ]
+        ],
+        "metadata": {{
+            "language": <list of strings>, # the language of the invoice in 2 character ISO code
+            "confidence_score": <float>, # the confidence level of the extraction from 0 to 1
+        }}
     }}
     </output_format>
 
     <example>
     {{
         "invoice_id": "1234567890",
+        "purchase_order_number": "1234567890",
         "invoice_date": "2025-01-01",
+        "invoice_due_date": "2025-01-08",
         "invoice_total": 100.00,
         "invoice_total_currency": "USD",
         "invoice_vat_amount": 10.00,
@@ -124,7 +132,11 @@ def process_invoice_prompt():
                 "total_price": 110.00,
                 "currency": "USD",
             }}
-        ]
+        ],
+        "metadata": {{
+            "language": ["en"],
+            "confidence_score": 0.95,
+        }}
     }}
     </example>
 
