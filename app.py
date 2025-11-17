@@ -150,9 +150,20 @@ if uploaded_file:
                     st.markdown(markdown_content, unsafe_allow_html=True)
 
                 with st.spinner("Extracting structured invoice data..."):
-                    invoice_result = process_invoice_chain(invoice_details=markdown_content)
+                    suppliers_list = [
+                        {"supplier_name": "Hubei Suiyue South Expressway", "nature_of_service": "Toll Fee", "cost_center": "A123"},
+                        {"supplier_name": "Intertek Vietnam", "nature_of_service": "Testing Fee", "cost_center": "A456"},
+                        {"supplier_name": "Taxon GmBH", "nature_of_service": "Marketing Fee", "cost_center": "B123"},
+                    ]
+                    suppliers_list_str = pd.DataFrame(suppliers_list).to_markdown()
+                    invoice_result = process_invoice_chain(invoice_details=markdown_content, suppliers_list=suppliers_list_str)
 
                 invoice_data = invoice_result.get("content") or {}
+
+                with st.expander("Suppliers List"):
+                    df_suppliers_list = pd.DataFrame(suppliers_list)
+                    df_suppliers_list.columns = ["Supplier Name", "Nature of Service", "Cost Center"]
+                    st.dataframe(df_suppliers_list, hide_index=True)
 
                 with st.expander("Form View", expanded=True):
                     confidence_level = invoice_data.get("metadata", {}).get("confidence_score", "")

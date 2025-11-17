@@ -19,12 +19,12 @@ def return_json_result(result):
         raise ValueError("LLM response is not a JSON object")
 
 
-def process_invoice_chain(invoice_details, model="azure-gpt-4.1"):
+def process_invoice_chain(invoice_details, suppliers_list, model="azure-gpt-4.1"):
     prompt_template = process_invoice_prompt()
     llm = load_llm_models(model=model)
     chain = prompt_template | llm
 
-    result = chain.invoke({"invoice_details": invoice_details})
+    result = chain.invoke({"invoice_details": invoice_details, "suppliers_list": suppliers_list})
 
     raw_content = return_json_result(result.content)
     parsed_content = parse_process_invoice_result(raw_content)

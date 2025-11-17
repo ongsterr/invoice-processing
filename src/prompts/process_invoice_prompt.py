@@ -20,7 +20,7 @@ def process_invoice_prompt():
     3. Extract the data points from the invoice based on the output_format provided.
     4. If the data points are not found, return None for that data point.
     5. If the data points are not clear or value confidence level is less than 0.8, return None for that data point.
-    6. Only return the JSON output format, no other text or comments.
+    6. Only return the JSON output format, no other text or comments. Ensure the output is in English.
     </instructions>
 
     <output_format>
@@ -64,7 +64,7 @@ def process_invoice_prompt():
         "seller_contact_name": <string>,
         "items": [
             {{
-                "cost_center": <string>, # this refers to the cost center which the item is charged to
+                "cost_center": <string>, # this refers to the cost center which the item is charged to, refer to the `suppliers_list` to find the correct cost center based on seller name and item description. If no match is found, return "Z123" as the cost center.
                 "description": <string>, # translate to english where possible
                 "quantity": <float>,
                 "unit_price": <float>,
@@ -77,7 +77,8 @@ def process_invoice_prompt():
         ],
         "metadata": {{
             "language": <list of strings>, # the language of the invoice in 2 character ISO code
-            "confidence_score": <float>, # the confidence level of the extraction from 0 to 1
+            "confidence_score": <float>, # the confidence level of the extraction from 0 to 1,
+            "cost_centre_mapping_logic": <string>, # the logic used to map the cost center to the item
         }}
     }}
     </output_format>
@@ -139,6 +140,10 @@ def process_invoice_prompt():
         }}
     }}
     </example>
+
+    <suppliers_list>
+    {suppliers_list}
+    </suppliers_list>
 
     <invoice_details format="markdown">
     {invoice_details}

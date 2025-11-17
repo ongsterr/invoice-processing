@@ -33,6 +33,7 @@ class InvoiceItem(BaseModel):
 class Metadata(BaseModel):
     language: Optional[List[str]] = None
     confidence_score: Optional[float] = None
+    cost_centre_mapping_logic: Optional[str] = None
 
 
 class ProcessInvoiceResult(BaseModel):
